@@ -43,11 +43,13 @@ def process(info):
   oldest_timestamp = -1
   latest_timestamp = -1
   previous_author_email = None
+  longest_name = 0
 
   for line in info:
     if SEP in line:
       total_commits += 1
       (author, email, timestamp) = line.split(SEP)
+      longest_name = max(longest_name, len(author))
       previous_author_email = email
       author_name[email] = author
       if not email in author_timestamp:
@@ -82,6 +84,7 @@ def process(info):
       author_changes[email] = (changes[0] + files_changed, changes[1] + insertions,
                                changes[2] + deletions)
 
+  print('\n=== Results ===\n')
   print('Total commits: {}'.format(total_commits))
   print('Total files changed: {}'.format(total_files_changed))
   print('Total insertions: {}'.format(total_insertions))
@@ -95,8 +98,9 @@ def process(info):
     authors.append((email, len(author_timestamp[email])))
   authors.sort(key = lambda x: x[1], reverse = True)
 
-  print('Authors:')
-  for elm in authors:
+  print('\nAuthors:')
+  for i in range(len(authors)):
+    elm = authors[i]
     email = elm[0]
     author = author_name[email]
     timestamps = author_timestamp[email]
@@ -112,8 +116,9 @@ def process(info):
         latest_timestamp = timestamp
       latest_timestamp = max(latest_timestamp, timestamp)
     changes = author_changes[email]
-    print('  {} ({}): {} commits ({:.1f}%), {} files changed, {} insertions, {} deletions'.
-          format(author, email, commits, commit_perc, changes[0], changes[1], changes[2]))
+    print(('{:>3}. {:<' + str(longest_name + 2) + '} {} commits ({:.1f}%), +{}/-{} changes').
+          format((i+1), author, commits, commit_perc, changes[1], changes[2]))
+    print('     {}'.format(email))
 
 def main():
   repo = os.path.abspath(sys.argv[1])
