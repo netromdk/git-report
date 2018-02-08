@@ -127,13 +127,28 @@ def process(info):
           format((i+1), author, commits, commit_perc, changes[1], changes[2]))
     print('     {}'.format(email))
 
-def main():
-  repo = os.path.abspath(sys.argv[1])
-  print('Git repo: {}'.format(repo))
-
+def check_repo(repo):
   if not os.path.exists(repo):
     print('Repo doesn\'t exist!')
-    return
+    return False
+
+  res = subprocess.run(['git', 'status'], cwd = repo, stdout = subprocess.PIPE,
+                       stderr = subprocess.STDOUT)
+  if res.returncode != 0:
+    print('Path isn\'t a git repo!')
+    return False
+
+  return True
+
+def main():
+  if len(sys.argv) != 2:
+    print('usage: {} <path to git repo>'.format(sys.argv[0]))
+    return -1
+
+  repo = os.path.abspath(sys.argv[1])
+  print('Git repo: {}'.format(repo))
+  if not check_repo(repo):
+    return -1
 
   print('Retrieving commits..')
   info = get_commit_info(repo)
@@ -141,9 +156,7 @@ def main():
   print('Processing commits..')
   process(info)
 
-if __name__ == '__main__':
-  if len(sys.argv) != 2:
-    print('usage: {} <path to git repo>'.format(sys.argv[0]))
-    sys.exit(-1)
+  return 0
 
-  main()
+if __name__ == '__main__':
+  sys.exit(main())
