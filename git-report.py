@@ -1,7 +1,15 @@
 #!/usr/bin/env python
+
+# Make sure v3+ is used.
+import sys
+major = sys.version_info.major
+minor = sys.version_info.minor
+if major < 3:
+  print('You are using Python v{}.{}. v3+ is required!'.format(major, minor))
+  sys.exit(-1)
+
 import os
 import re
-import sys
 import subprocess
 from datetime import datetime
 
