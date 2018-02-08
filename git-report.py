@@ -25,7 +25,7 @@ def format_timestamp(timestamp):
   return utc_time.strftime("%Y-%m-%d %H:%M:%S (UTC)")
 
 def process(info):
-  author_email = {} # author -> email
+  author_name = {} # author email -> name
   author_timestamp = {} # author -> [timestamps]
   author_changes = {} # author -> (#files changed, #insertions, #deletions)
   total_commits = 0
@@ -34,25 +34,25 @@ def process(info):
   total_deletions = 0
   oldest_timestamp = -1
   latest_timestamp = -1
-  previous_author = None
+  previous_author_email = None
 
   for line in info:
     if SEP in line:
       total_commits += 1
       (author, email, timestamp) = line.split(SEP)
-      previous_author = author
-      author_email[author] = email
-      if not author in author_timestamp:
-        author_timestamp[author] = []
-      author_timestamp[author].append(timestamp)
+      previous_author_email = email
+      author_name[email] = author
+      if not email in author_timestamp:
+        author_timestamp[email] = []
+      author_timestamp[email].append(timestamp)
       if oldest_timestamp == -1:
         oldest_timestamp = timestamp
       oldest_timestamp = min(oldest_timestamp, timestamp)
       if latest_timestamp == -1:
         latest_timestamp = timestamp
       latest_timestamp = max(latest_timestamp, timestamp)
-    elif previous_author:
-      author = previous_author
+    elif previous_author_email:
+      email = previous_author_email
       files_changed = 0
       m = FILES_CHANGED_REGEX.search(line)
       if m:
@@ -68,11 +68,11 @@ def process(info):
       if m:
         deletions = int(m.group(1))
         total_deletions += deletions
-      if not author in author_changes:
-        author_changes[author] = (0, 0, 0)
-      changes = author_changes[author]
-      author_changes[author] = (changes[0] + files_changed, changes[1] + insertions,
-                                changes[2] + deletions)
+      if not email in author_changes:
+        author_changes[email] = (0, 0, 0)
+      changes = author_changes[email]
+      author_changes[email] = (changes[0] + files_changed, changes[1] + insertions,
+                               changes[2] + deletions)
 
   print('Total commits: {}'.format(total_commits))
   print('Total files changed: {}'.format(total_files_changed))
@@ -83,15 +83,15 @@ def process(info):
 
   # Sort authors for most commits first.
   authors = []
-  for author in author_email.keys():
-    authors.append((author, len(author_timestamp[author])))
+  for email in author_name.keys():
+    authors.append((email, len(author_timestamp[email])))
   authors.sort(key = lambda x: x[1], reverse = True)
 
   print('Authors:')
   for elm in authors:
-    author = elm[0]
-    email = author_email[author]
-    timestamps = author_timestamp[author]
+    email = elm[0]
+    author = author_name[email]
+    timestamps = author_timestamp[email]
     commits = len(timestamps)
     commit_perc = float(commits) / float(total_commits) * 100
     oldest_timestamp = -1
@@ -103,7 +103,7 @@ def process(info):
       if latest_timestamp == -1:
         latest_timestamp = timestamp
       latest_timestamp = max(latest_timestamp, timestamp)
-    changes = author_changes[author]
+    changes = author_changes[email]
     print('  {} ({}): {} commits ({:.1f}%), {} files changed, {} insertions, {} deletions'.
           format(author, email, commits, commit_perc, changes[0], changes[1], changes[2]))
 
