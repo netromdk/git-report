@@ -14,7 +14,8 @@ import subprocess
 from datetime import datetime
 
 SEP = ',|,'
-LOG_CMD = 'git log --pretty=format:"%an{}%ae{}%at"  --shortstat --no-color'.format(SEP, SEP)
+LOG_CMD =\
+  'git log --pretty=format:"%an{}%ae{}%at" --shortstat --encoding=UTF-8 --no-color'.format(SEP, SEP)
 FILES_CHANGED_REGEX = re.compile(r'(\d+)\s+files\s+changed')
 INSERTIONS_REGEX = re.compile(r'(\d+)\s+insertions')
 DELETIONS_REGEX = re.compile(r'(\d+)\s+deletions')
@@ -22,11 +23,17 @@ DELETIONS_REGEX = re.compile(r'(\d+)\s+deletions')
 def create_cmd():
   return filter(None, LOG_CMD.split(' '))
 
+def decode(binary):
+  try:
+    return binary.decode('utf-8')
+  except:
+    return binary.decode('unicode_escape')
+
 def get_commit_info(repo):
   print('Running git log..')
-  res = subprocess.run(create_cmd(), stdout = subprocess.PIPE, cwd = repo)
+  output = subprocess.run(create_cmd(), stdout = subprocess.PIPE, cwd = repo).stdout
   print('Sanitizing output..')
-  return res.stdout.decode('utf-8').replace('\"', '').splitlines()
+  return decode(output).replace('\"', '').splitlines()
 
 def format_timestamp(timestamp):
   utc_time = datetime.utcfromtimestamp(float(timestamp))
