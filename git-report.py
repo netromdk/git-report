@@ -61,6 +61,8 @@ def process(info):
       if latest_timestamp == -1:
         latest_timestamp = timestamp
       latest_timestamp = max(latest_timestamp, timestamp)
+      if not email in author_changes:
+        author_changes[email] = (0, 0, 0)
     elif previous_author_email:
       email = previous_author_email
       files_changed = 0
@@ -78,8 +80,6 @@ def process(info):
       if m:
         deletions = int(m.group(1))
         total_deletions += deletions
-      if not email in author_changes:
-        author_changes[email] = (0, 0, 0)
       changes = author_changes[email]
       author_changes[email] = (changes[0] + files_changed, changes[1] + insertions,
                                changes[2] + deletions)
